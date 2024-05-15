@@ -9,17 +9,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sareep/hci-reversi.git"
+    "url": "git+https://github.com/christyseguritan/new-reversi.git"
   },
   "keywords": [
     "reversi"
   ],
-  "author": "Sam Reep",
+  "author": "Christy Seguritan",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/sareep/hci-reversi/issues"
+    "url": "https://github.com/christyseguritan/new-reversi/issues"
   },
-  "homepage": "https://github.com/sareep/hci-reversi#readme",
+  "homepage": "https://github.com/christyseguritan/new-reversi#readme",
   "dependencies": {
     "minimist": "^1.2.5",
     "node-static": "^0.7.11",
