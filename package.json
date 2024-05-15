@@ -1,10 +1,9 @@
 {
-  "name": "reversi",
-  "version": "1.0.0",
-  "description": "This is the game 'reversi'",
+  "name": "new-reversi",
+  "version": "0.0.1",
+  "description": "this is the web version of the game reversi",
   "main": "server.js",
   "scripts": {
-    "preinstall": "npx npm-force-resolutions",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -12,21 +11,17 @@
     "url": "git+https://github.com/christyseguritan/new-reversi.git"
   },
   "keywords": [
+    "hci",
     "reversi"
   ],
   "author": "Christy Seguritan",
-  "license": "GPL-3.0",
+  "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/christyseguritan/new-reversi/issues"
   },
   "homepage": "https://github.com/christyseguritan/new-reversi#readme",
   "dependencies": {
-    "minimist": "^1.2.5",
     "node-static": "^0.7.11",
-    "optimist": "^0.6.1",
-    "socket.io": "^2.3.0"
-  },
-  "resolutions": {
-    "minimist": "0.2.1"
+    "socket.io": "^4.7.5"
   }
 }
