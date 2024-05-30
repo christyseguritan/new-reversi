@@ -124,7 +124,7 @@ io.on('connection', (socket) => {
                     room: room
                 }
                 /* Announce to everyone that is in the room, who else is in the room */
-                for (const member of sockets){
+                for (const member of sockets) {
                     response = {
                         result: 'success',
                         socket_id: member.id,
@@ -136,97 +136,239 @@ io.on('connection', (socket) => {
                     io.of('/').to(room).emit('join_room_response', response);
                     serverLog('join_room succeeded', JSON.stringify(response));
                 }
-             }
+            }
         });
     });
 
-socket.on('disconnect', () => {
-    serverLog('a page disconnected from the server: ' + socket.id);
-    if ((typeof players[socket.id] != 'undefined') && (players[socket.id] != null)) {
-        let payload = {
-            username: players[socket.id].username,
-            room: players[socket.id].room,
-            count: Object.keys(players).length - 1,
-            socket_id: socket.id
-        };
+    socket.on('invite', (payload) => {
+        serverLog('Server received a command', '\'invite\'', JSON.stringify(payload));
+        /* Check that the data coming from the client is good */
+        if ((typeof payload == 'undefined') || (payload === null)) {
+            response == {};
+            reponse.result = 'fail';
+            response.message = 'client did not send a payload';
+            socket.emit('invite_response', response);
+            serverLog('invite command failed', JSON.stringify(response));
+            return;
+        }
+        let requested_user = payload.requested_user;
         let room = players[socket.id].room;
-        delete players[socket.id];
+        let username = players[socket.id].username;
+        if ((typeof requested_user == 'undefined') || (requested_user === null) || (requested_user === "")) {
+            response = {
+                result: 'fail',
+                message: 'client did not request a valid user to invite to play'
+            }
+            socket.emit('invite_response', response);
+            serverLog('invite command failed', JSON.stringify(response));
+            return;
+        }
+        if ((typeof room == 'undefined') || (room === null) || (room === "")) {
+            response = {
+                result: 'fail',
+                message: 'the user that was invited is not in a room'
+            }
+            socket.emit('invite_response', response);
+            serverLog('invite command failed', JSON.stringify(response));
+            return;
+        }
+        if ((typeof username == 'undefined') || (username === null) || (username === "")) {
+            response = {
+                result: 'fail',
+                message: 'the user that was invited does not have a name registered'
+            }
+            socket.emit('invite_response', response);
+            serverLog('invite command failed', JSON.stringify(response));
+            return;
+        }
 
-        /* Tell everyone who left the room */
-        io.of("/").to(room).emit('player_disconnected', payload);
-        serverLog('player_disconnected succeeded ', JSON.stringify(payload));
-    }
-});
+        /*make sure that the invited player is present */
+        io.in(room).allSockets().then((sockets) => {
+            /*Socket didn't join the room */
+            /* Invitee isn't in the room */
+            if ((typeof sockets == 'undefined') || (sockets === null) || !sockets.has(requested_user)) {
+                response = {
+                    result: 'fail',
+                    message: 'the user that was invited is no longer in the room'
+                }
+                socket.emit('invite_response', response);
+                serverLog('invite command failed', JSON.stringify(response));
+            }
+            /* Invitee is in the room */
+            else {
+                response = {
+                    result: 'success',
+                    socket_id: requested_user
+                }
+                socket.emit('invite_response', response);
+                response = {
+                    result: 'success',
+                    socket_id: socket.id
+                }
+                socket.to(requested_user).emit('invited', response);
+                serverLog('invite command succeeded', JSON.stringify(response));
+            }
+        });
+    });
 
-/* send_chat_message command handler */
-/* expexcted payload:
+    socket.on('uninvite', (payload) => {
+        serverLog('Server received a command', '\'invite\'', JSON.stringify(payload));
+        /* Check that the data coming from the client is good */
+        if ((typeof payload == 'undefined') || (payload === null)) {
+            response == {};
+            reponse.result = 'fail';
+            response.message = 'client did not send a payload';
+            socket.emit('uninvited', response);
+            serverLog('uninvite command failed', JSON.stringify(response));
+            return;
+        }
+        let requested_user = payload.requested_user;
+        let room = players[socket.id].room;
+        let username = players[socket.id].username;
+        if ((typeof requested_user == 'undefined') || (requested_user === null) || (requested_user === "")) {
+            response = {
+                result: 'fail',
+                message: 'client did not request a valid user to uninvite'
+            }
+            socket.emit('uninvite_responsed', response);
+            serverLog('uninvite command failed', JSON.stringify(response));
+            return;
+        }
+        if ((typeof room == 'undefined') || (room === null) || (room === "")) {
+            response = {
+                result: 'fail',
+                message: 'the user that was uninvited is not in a room'
+            }
+            socket.emit('uninvited', response);
+            serverLog('uninvite command failed', JSON.stringify(response));
+            return;
+        }
+        if ((typeof username == 'undefined') || (username === null) || (username === "")) {
+            response = {
+                result: 'fail',
+                message: 'the user that was uninvited does not have a name registered'
+            }
+            socket.emit('uninvited', response);
+            serverLog('uninvite command failed', JSON.stringify(response));
+            return;
+        }
+
+        /*make sure that the invited player is present */
+        io.in(room).allSockets().then((sockets) => {
+            /* UnInvitee isn't in the room */
+            if ((typeof sockets == 'undefined') || (sockets === null) || !sockets.has(requested_user)) {
+                response = {
+                    result: 'fail',
+                    message: 'the user that was uninvited is no longer in the room'
+                }
+                socket.emit('uninvited', response);
+                serverLog('uninvite command failed', JSON.stringify(response));
+            }
+            /* UnInvitee is in the room */
+            else {
+                response = {
+                    result: 'success',
+                    socket_id: requested_user
+                }
+                socket.emit('uninvited', response);
+                response = {
+                    result: 'success',
+                    socket_id: socket.id
+                }
+                socket.to(requested_user).emit('uninvited', response);
+                serverLog('uninvite invite command succeeded', JSON.stringify(response));
+            }
+        });
+    });
+
+    socket.on('disconnect', () => {
+        serverLog('a page disconnected from the server: ' + socket.id);
+        if ((typeof players[socket.id] != 'undefined') && (players[socket.id] != null)) {
+            let payload = {
+                username: players[socket.id].username,
+                room: players[socket.id].room,
+                count: Object.keys(players).length - 1,
+                socket_id: socket.id
+            };
+            let room = players[socket.id].room;
+            delete players[socket.id];
+
+            /* Tell everyone who left the room */
+            io.of("/").to(room).emit('player_disconnected', payload);
+            serverLog('player_disconnected succeeded ', JSON.stringify(payload));
+        }
+    });
+
+
+    /* send_chat_message command handler */
+    /* expexcted payload:
+        {
+        'room': the room to which the message should be sent,
+        'username': the name of the sender
+        'message': the message to broadcast
+        }
+    */
+    /* send_chat_message_response:
     {
-    'room': the room to which the message should be sent,
-    'username': the name of the sender
-    'message': the message to broadcast
+      'result': "success",
+      'username': the user that sent the message,
+      'message': the message that was sent
     }
-*/
-/* send_chat_message_response:
-{
-  'result': "success",
-  'username': the user that sent the message,
-  'message': the message that was sent
-}
-or 
-{
-    'result': 'fail,
-    'message': the reason for failure 
-}
-*/
+    or 
+    {
+        'result': 'fail,
+        'message': the reason for failure 
+    }
+    */
 
-socket.on('send_chat_message', (payload) => {
-    serverLog('Server received a command', '\'send_chat_message\'', JSON.stringify(payload));
-    /* Check that the data coming from the client is good */
-    if ((typeof payload == 'undefined') || (payload === null)) {
-        response == {};
-        reponse.result = 'fail';
-        response.message = 'client did not send a payload';
-        socket.emit('send_chat_message_response', response);
-        serverLog('send_chat_message command failed', JSON.stringify(response));
-        return;
-    }
-    let room = payload.room;
-    let username = payload.username;
-    let message = payload.message;
-    if ((typeof room == 'undefined') || (room === null)) {
-        response == {};
-        reponse.result = 'fail';
-        response.message = 'client did not send a valid room to message';
-        socket.emit('send_chat_message_response', response);
-        serverLog('send_chat_message command failed', JSON.stringify(response));
-        return;
-    }
-    if ((typeof username == 'undefined') || (username === null)) {
-        response == {};
-        reponse.result = 'fail';
-        response.message = 'client did not send a valid username as a message source';
-        socket.emit('send_chat_message_response', response);
-        serverLog('send_chat_message command failed', JSON.stringify(response));
-        return;
-    }
-    if ((typeof message == 'undefined') || (message === null)) {
-        response == {};
-        reponse.result = 'fail';
-        response.message = 'client did not send a valid message';
-        socket.emit('send_chat_message_response', response);
-        serverLog('send_chat_message command failed', JSON.stringify(response));
-        return;
-    }
+    socket.on('send_chat_message', (payload) => {
+        serverLog('Server received a command', '\'send_chat_message\'', JSON.stringify(payload));
+        /* Check that the data coming from the client is good */
+        if ((typeof payload == 'undefined') || (payload === null)) {
+            response == {};
+            reponse.result = 'fail';
+            response.message = 'client did not send a payload';
+            socket.emit('send_chat_message_response', response);
+            serverLog('send_chat_message command failed', JSON.stringify(response));
+            return;
+        }
+        let room = payload.room;
+        let username = payload.username;
+        let message = payload.message;
+        if ((typeof room == 'undefined') || (room === null)) {
+            response == {};
+            reponse.result = 'fail';
+            response.message = 'client did not send a valid room to message';
+            socket.emit('send_chat_message_response', response);
+            serverLog('send_chat_message command failed', JSON.stringify(response));
+            return;
+        }
+        if ((typeof username == 'undefined') || (username === null)) {
+            response == {};
+            reponse.result = 'fail';
+            response.message = 'client did not send a valid username as a message source';
+            socket.emit('send_chat_message_response', response);
+            serverLog('send_chat_message command failed', JSON.stringify(response));
+            return;
+        }
+        if ((typeof message == 'undefined') || (message === null)) {
+            response == {};
+            reponse.result = 'fail';
+            response.message = 'client did not send a valid message';
+            socket.emit('send_chat_message_response', response);
+            serverLog('send_chat_message command failed', JSON.stringify(response));
+            return;
+        }
 
-    /* Handle the command */
-    let response = {};
-    response.result = 'success';
-    response.username = username;
-    response.room = room;
-    response.message = message;
+        /* Handle the command */
+        let response = {};
+        response.result = 'success';
+        response.username = username;
+        response.room = room;
+        response.message = message;
 
-    /* Tell everyone in the room what the message is */
-    io.of('/').to(room).emit('send_chat_message_response', response);
-    serverLog('send_chat_message command', JSON.stringify(response));
+        /* Tell everyone in the room what the message is */
+        io.of('/').to(room).emit('send_chat_message_response', response);
+        serverLog('send_chat_message command', JSON.stringify(response));
     });
 });
