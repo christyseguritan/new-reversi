@@ -440,7 +440,7 @@ io.on('connection', (socket) => {
         response.message = message;
 
         /* Tell everyone in the room what the message is */
-        io.of('/').to(room).emit('play_token', response);
+        io.of('/').to(room).emit('send_chat_message_response', response);
         serverLog('send_chat_message command', JSON.stringify(response));
     });
 
@@ -668,7 +668,7 @@ function send_game_update(socket, game_id, message) {
             result: 'success',
             game_id: game_id,
             game: games[game_id],
-            who_won: 'everyone '
+            who_won: 'everyone'
         }
         io.in(game_id).emit('game_over', payload);
 
