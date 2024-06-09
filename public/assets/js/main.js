@@ -214,7 +214,7 @@ socket.on('player_disconnected', (payload) => {
         domElements.hide("fade", 500)
     }
 
-    let newHTML = '<p class=\'left_room_response\'>' + payload.username + ' left the ' + payload.room + '. (There are ' + payload.count + ' users in this room)</p>';
+    let newHTML = '<p class=\'left_room_response\'>' + payload.username + ' left the chatroom. (There are ' + payload.count + ' users in this room)</p>';
     let newNode = $(newHTML);
     newNode.hide();
     $('#messages').prepend(newNode);
@@ -263,6 +263,7 @@ let old_board = [
 ];
 
 let my_color = "";
+let interval_timer;
 
 
 socket.on('game_update', (payload) => {
@@ -292,12 +293,33 @@ socket.on('game_update', (payload) => {
         window.location.href = 'lobby.html?username=' + username;
         return;
     }
+    if (my_color === 'white') {
+        $("#my_color").html('<h3 id="my_color"> I am seal</h3>');
+    }
+    else if (my_color === "black") {
+        $("#my_color").html('<h3 id="my_color"> I am dog</h3>');
 
-    $("#my_color").html('<h3 id="my_color"> I am ' + my_color + '</h1>');
+    }
+    else {
+        $("#my_color").html('<h3 id="my_color"> Error: I don\'t know what color I am</h3>');
 
+    }
 
-    let whitesum=0;
-    let blacksum=0;
+    if (payload.game.whose_turn === 'white') {
+        $("#my_color").append('<h4> It is seal\'s turn!</h4>');
+    }
+    else if (payload.game.whose_turn === 'black') {
+        $("#my_color").append('<h4> It is dog\'s turn!</h4>');
+
+    }
+    else {
+        $("#my_color").append('<h4> Error: I don\'t know whose turn it is</h4>');
+
+    }
+
+    
+    let whitesum = 0;
+    let blacksum = 0;
 
     /* Animate changes to the board */
     for (let row = 0; row < 8; row++) {
@@ -305,7 +327,7 @@ socket.on('game_update', (payload) => {
             if (board[row][column] === 'w') {
                 whitesum++;
             }
-            else if (board[row][column] === 'b'){
+            else if (board[row][column] === 'b') {
                 blacksum++;
             }
 
@@ -346,7 +368,7 @@ socket.on('game_update', (payload) => {
                     graphic = "white_to_black.gif";
                     altTag = "black token";
                 }
-                else if ((old_board[row][column] === 'b') && (board[row][column] === ' ')) {
+                else if ((old_board[row][column] === 'b') && (board[row][column] === 'w')) {
                     graphic = "black_to_white.gif";
                     altTag = "white token";
                 }
@@ -357,9 +379,12 @@ socket.on('game_update', (payload) => {
 
                 const t = Date.now();
                 $('#' + row + '_' + column).html('<img class="img-fluid" src="assets/images/' + graphic + '?time=' + t + '" alt="' + altTag + '" />');
-
+            }
+            /*Set up interactivity here*/
                 $('#' + row + '_' + column).off('click');
-                if (board[row][column] === ' ') {
+                $('#' + row + '_' + column).removeClass('hovered_over');
+                if(payload.game.whose_turn === my_color){
+                    if(payload.game.legal_moves[row][column] === my_color.substr(0,1)){
                     $('#' + row + '_' + column).addClass('hovered_over');
                     $('#' + row + '_' + column).click(((r, c) => {
                         return (() => {
@@ -373,14 +398,37 @@ socket.on('game_update', (payload) => {
                         });
                     })(row, column));
                 }
-                else {
-                    $('#' + row + '_' + column).removeClass('hovered_over');
-
-                }
-
             }
         }
     }
+
+    clearInterval(interval_timer)
+    interval_timer=setInterval( ((last_time) => {
+        return ( () =>{
+            let d = new Date();
+            let elapsed_m=d.getTime() - last_time;
+            let minutes = Math.floor(elapsed_m/(60 *1000));
+            let seconds = Math.floor((elapsed_m % (60*1000))/1000);
+            let total = minutes * 60 + seconds;
+            if (total>100){
+                total = 100;
+            }
+            $("#elapsed").css("width", total + "%").attr("aria-valuenow", total);
+
+            let timestring = ""+seconds;
+            timestring = timestring.padStart( 2, '0');
+            timestring = minutes + ":" +timestring;
+            if (total<100){
+                $("#elapsed").html(timestring);
+            }
+            else {
+                $("#elapsed").html("Times up!");
+            }
+        })
+    })(payload.game.last_move_time)
+    , 1000);
+        
+
     $("#whitesum").html(whitesum);
     $("#blacksum").html(blacksum);
     old_board = board;
@@ -394,6 +442,7 @@ socket.on('play_token_response', (payload) => {
     }
     if (payload.result === 'fail') {
         console.log(payload.message);
+        alert(payload.message);
         return;
     }
 })
@@ -413,7 +462,7 @@ socket.on('game_over', (payload) => {
     let nodeA = $("<div id = 'game_over'></div>");
     let nodeB = $("<h1> Game Over</h1>");
     let nodeC = $("<h2>" + payload.who_won + " won!!</h2>");
-    let nodeD = $("<a href='lobby.html?username="+username+"' class='btn btn-large btn-success' role='button'>Return to lobby</a>");
+    let nodeD = $("<a href='lobby.html?username=" + username + "' class='btn btn-large btn-success' role='button'>Return to lobby</a>");
     nodeA.append(nodeB);
     nodeA.append(nodeC);
     nodeA.append(nodeD);
@@ -433,7 +482,7 @@ $(() => {
     socket.emit('join_room', request);
 
     $("#lobbyTitle").html(username + "'s Lobby");
-    $("#quit").html("<a href='lobby.html?username="+username+"' class='btn btn btn-danger' role='button'>QUIT</a>");
+    $("#quit").html("<a href='lobby.html?username=" + username + "' class='btn btn btn-danger' role='button'>QUIT</a>");
 
 
     $('#chatMessage').keypress(function (e) {
