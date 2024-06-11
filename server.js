@@ -571,7 +571,8 @@ io.on('connection', (socket) => {
         }
 
         let d = new Date();
-        game;last_move_time = d.getTime();
+        game.last_move_time = d.getTime();
+        
         send_game_update(socket, game_id, 'played a token');
     });
 });
