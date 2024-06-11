@@ -404,7 +404,7 @@ socket.on('game_update', (payload) => {
 
     clearInterval(interval_timer)
     interval_timer=setInterval( ((last_time) => {
-        return ( () =>{
+        return (() =>{
             let d = new Date();
             let elapsed_m=d.getTime() - last_time;
             let minutes = Math.floor(elapsed_m/(60 *1000));
@@ -416,7 +416,7 @@ socket.on('game_update', (payload) => {
             $("#elapsed").css("width", total + "%").attr("aria-valuenow", total);
 
             let timestring = ""+seconds;
-            timestring = timestring.padStart( 2, '0');
+            timestring = timestring.padStart(2, '0');
             timestring = minutes + ":" +timestring;
             if (total<100){
                 $("#elapsed").html(timestring);
@@ -427,7 +427,8 @@ socket.on('game_update', (payload) => {
         })
     })(payload.game.last_move_time)
     , 1000);
-        
+       
+    
 
     $("#whitesum").html(whitesum);
     $("#blacksum").html(blacksum);

@@ -1,20 +1,23 @@
 body {
-    background-color: wheat;
+    background-color: #F5DEB3;
 }
 
 .headerrow,
 #messagePane {
-    background-color: rgb(152, 210, 152);
+    background-color: #F5DEB3;
+    color: #00519C;
 }
 
 .join_room_response,.left_room_response {
-    background-color: rgb(180, 218, 230);
+    background-color: #F5DEB3;
+    color: rgb(159, 70, 70)
 }
 
 .chat_message {
     margin: 1px 1px 1px 1px;
     font-size: 125%;
-    color: rgb(29, 29, 29)
+    color: #ffffff;
+    background-color: #00519C;
 }
 
 table#game_board {
@@ -24,8 +27,8 @@ table#game_board {
 }
 
 table#game_board td {
-    background-color: rgb(152, 210, 152);
-    border: 1px solid #ffffff;
+    background-color: #F5DEB3;
+    border: 1px solid #00519C;
     margin: 0px;
     padding:0px;
 }
